@@ -5,6 +5,7 @@ from itertools import chain
 import six
 import torch
 import numpy as np
+import pandas as pd
 import h5py
 import os
 import warnings

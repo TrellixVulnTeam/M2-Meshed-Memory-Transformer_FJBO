@@ -81,11 +81,19 @@ class Merge(RawField):
 
 
 class ImageDetectionsField(RawField):
-    def __init__(self, preprocessing=None, postprocessing=None, detections_path=None, max_detections=100,
+    def __init__(self, preprocessing=None, postprocessing=None, detections_path=None, captions_path=None, max_detections=100,
                  sort_by_prob=False, load_in_tmp=True):
         self.max_detections = max_detections
         self.detections_path = detections_path
         self.sort_by_prob = sort_by_prob
+
+        self.caps = pd.read_csv(captions_path)
+        self.caps.drop_duplicates(subset='image', keep='first', inplace=True, ignore_index=True)
+
+        detections = np.load(detections_path)
+        self.precomp = {}
+        for i in range(len(detections)):
+            self.precomp[self.caps.iloc[i, 0].split('.')[0]] = detections[i]
 
         tmp_detections_path = os.path.join('/tmp', os.path.basename(detections_path))
 
@@ -104,10 +112,12 @@ class ImageDetectionsField(RawField):
         super(ImageDetectionsField, self).__init__(preprocessing, postprocessing)
 
     def preprocess(self, x, avoid_precomp=False):
-        image_id = int(x.split('_')[-1].split('.')[0])
+        # image_id = x.split('_')[-1].split('.')[0]
+        image_id = x.split('.')[0]
         try:
-            f = h5py.File(self.detections_path, 'r')
-            precomp_data = f['%d_features' % image_id][()]
+            # f = h5py.File(self.detections_path, 'r')
+            # precomp_data = f['%d_features' % image_id][()]
+            precomp_data = self.precomp[image_id]
             if self.sort_by_prob:
                 precomp_data = precomp_data[np.argsort(np.max(f['%d_cls_prob' % image_id][()], -1))[::-1]]
         except KeyError:

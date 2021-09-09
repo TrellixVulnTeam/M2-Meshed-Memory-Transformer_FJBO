@@ -182,42 +182,42 @@ class COCO(PairedDataset):
     def __init__(self, image_field, text_field, img_root, ann_root, id_root=None, use_restval=True,
                  cut_validation=False):
         roots = {}
-        roots['train'] = {
-            'img': os.path.join(img_root, 'train2014'),
-            'cap': os.path.join(ann_root, 'captions_train2014.json')
-        }
-        roots['val'] = {
-            'img': os.path.join(img_root, 'val2014'),
-            'cap': os.path.join(ann_root, 'captions_val2014.json')
-        }
+        # roots['train'] = {
+        #     'img': os.path.join(img_root, 'train2014'),
+        #     'cap': os.path.join(ann_root, 'captions_train2014.json')
+        # }
+        # roots['val'] = {
+        #     'img': os.path.join(img_root, 'val2014'),
+        #     'cap': os.path.join(ann_root, 'captions_val2014.json')
+        # }
         roots['test'] = {
-            'img': os.path.join(img_root, 'val2014'),
-            'cap': os.path.join(ann_root, 'captions_val2014.json')
+            'img': os.path.join(img_root, 'Images'),
+            'cap': ann_root
         }
-        roots['trainrestval'] = {
-            'img': (roots['train']['img'], roots['val']['img']),
-            'cap': (roots['train']['cap'], roots['val']['cap'])
-        }
+        # roots['trainrestval'] = {
+        #     'img': (roots['train']['img'], roots['val']['img']),
+        #     'cap': (roots['train']['cap'], roots['val']['cap'])
+        # }
 
         if id_root is not None:
             ids = {}
-            ids['train'] = np.load(os.path.join(id_root, 'coco_train_ids.npy'))
-            ids['val'] = np.load(os.path.join(id_root, 'coco_dev_ids.npy'))
-            if cut_validation:
-                ids['val'] = ids['val'][:5000]
-            ids['test'] = np.load(os.path.join(id_root, 'coco_test_ids.npy'))
-            ids['trainrestval'] = (
-                ids['train'],
-                np.load(os.path.join(id_root, 'coco_restval_ids.npy')))
-
-            if use_restval:
-                roots['train'] = roots['trainrestval']
-                ids['train'] = ids['trainrestval']
+            # ids['train'] = np.load(os.path.join(id_root, 'coco_train_ids.npy'))
+            # ids['val'] = np.load(os.path.join(id_root, 'coco_dev_ids.npy'))
+            # if cut_validation:
+            #     ids['val'] = ids['val'][:5000]
+            ids['test'] = [image_field.caps.iloc[i, 0].split('.')[0] for i in range(len(image_field.caps))]
+            # ids['trainrestval'] = (
+            #     ids['train'],
+            #     np.load(os.path.join(id_root, 'coco_restval_ids.npy')))
+            #
+            # if use_restval:
+            #     roots['train'] = roots['trainrestval']
+            #     ids['train'] = ids['trainrestval']
         else:
             ids = None
 
         with nostdout():
-            self.train_examples, self.val_examples, self.test_examples = self.get_samples(roots, ids)
+            self.train_examples, self.val_examples, self.test_examples = self.get_samples(roots, ids, image_field.caps)
         examples = self.train_examples + self.val_examples + self.test_examples
         super(COCO, self).__init__(examples, {'image': image_field, 'text': text_field})
 
@@ -229,17 +229,18 @@ class COCO(PairedDataset):
         return train_split, val_split, test_split
 
     @classmethod
-    def get_samples(cls, roots, ids_dataset=None):
+    def get_samples(cls, roots, ids_dataset=None, caps=None):
         train_samples = []
         val_samples = []
         test_samples = []
 
-        for split in ['train', 'val', 'test']:
+        # for split in ['train', 'val', 'test']:
+        for split in ['test']:
             if isinstance(roots[split]['cap'], tuple):
                 coco_dataset = (pyCOCO(roots[split]['cap'][0]), pyCOCO(roots[split]['cap'][1]))
                 root = roots[split]['img']
             else:
-                coco_dataset = (pyCOCO(roots[split]['cap']),)
+                coco_dataset = (caps,)
                 root = (roots[split]['img'],)
 
             if ids_dataset is None:
@@ -261,10 +262,12 @@ class COCO(PairedDataset):
                     coco = coco_dataset[1]
                     img_root = root[1]
 
-                ann_id = ids[index]
-                caption = coco.anns[ann_id]['caption']
-                img_id = coco.anns[ann_id]['image_id']
-                filename = coco.loadImgs(img_id)[0]['file_name']
+                # ann_id = ids[index]
+                # caption = coco.anns[ann_id]['caption']
+                # img_id = coco.anns[ann_id]['image_id']
+                # filename = coco.loadImgs(img_id)[0]['file_name']
+                filename = coco.iloc[index, 0]
+                caption = coco.iloc[index, 1]
 
                 example = Example.fromdict({'image': os.path.join(img_root, filename), 'text': caption})
 

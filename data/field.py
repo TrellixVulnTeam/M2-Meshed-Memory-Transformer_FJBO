@@ -122,7 +122,7 @@ class ImageDetectionsField(RawField):
             if self.sort_by_prob:
                 precomp_data = precomp_data[np.argsort(np.max(f['%d_cls_prob' % image_id][()], -1))[::-1]]
         except KeyError:
-            warnings.warn('Could not find detections for %d' % image_id)
+            warnings.warn('Could not find detections for ' + image_id)
             precomp_data = np.random.rand(10,2048)
 
         delta = self.max_detections - precomp_data.shape[0]

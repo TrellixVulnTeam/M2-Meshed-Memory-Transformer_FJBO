@@ -114,7 +114,7 @@ class ImageDetectionsField(RawField):
 
     def preprocess(self, x, avoid_precomp=False):
         # image_id = x.split('_')[-1].split('.')[0]
-        image_id = x.split('.')[0]
+        image_id = x.split('.')[0].split(os.path.sep)[-1]
         try:
             # f = h5py.File(self.detections_path, 'r')
             # precomp_data = f['%d_features' % image_id][()]

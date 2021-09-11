@@ -94,7 +94,7 @@ class ImageDetectionsField(RawField):
         self.caps = pd.read_csv(captions_path)
         self.caps.drop_duplicates(subset='image', keep='first', inplace=True, ignore_index=True)
 
-        self.precomp = readTSV(detections_path, ['image_id', 'features'])
+        self.precomp = self.readTSV(detections_path, ['image_id', 'features'])
 
         tmp_detections_path = os.path.join('/tmp', os.path.basename(detections_path))
 
@@ -112,7 +112,7 @@ class ImageDetectionsField(RawField):
 
         super(ImageDetectionsField, self).__init__(preprocessing, postprocessing)
 
-    def readTSV(path, fields):
+    def readTSV(self, path, fields):
         print('reading detections...\n')
         csv.field_size_limit(sys.maxsize)
         reader = csv.DictReader(open(path, "r+"), delimiter='\t', fieldnames=fields)

@@ -10,6 +10,9 @@ import h5py
 import os
 import warnings
 import shutil
+import csv as csv
+import base64
+import sys
 
 from .dataset import Dataset
 from .vocab import Vocab
@@ -91,10 +94,7 @@ class ImageDetectionsField(RawField):
         self.caps = pd.read_csv(captions_path)
         self.caps.drop_duplicates(subset='image', keep='first', inplace=True, ignore_index=True)
 
-        detections = np.load(detections_path)
-        self.precomp = {}
-        for i in range(len(detections)):
-            self.precomp[self.caps.iloc[i, 0].split('.')[0]] = detections[i]
+        self.precomp = readTSV(detections_path, ['image_id', 'features'])
 
         tmp_detections_path = os.path.join('/tmp', os.path.basename(detections_path))
 
@@ -111,6 +111,19 @@ class ImageDetectionsField(RawField):
                 self.detections_path = tmp_detections_path
 
         super(ImageDetectionsField, self).__init__(preprocessing, postprocessing)
+
+    def readTSV(path, fields):
+        print('reading detections...\n')
+        csv.field_size_limit(sys.maxsize)
+        reader = csv.DictReader(open(path, "r+"), delimiter='\t', fieldnames=fields)
+        mapping = {}
+        for item in reader:
+            data = item[fields[-1]]
+            buf = base64.b64decode(data[1:])
+            temp = np.frombuffer(buf, dtype=np.float32)
+            temp = temp.reshape(36, -1)
+            mapping[item[fields[0]]] = temp
+        return mapping
 
     def preprocess(self, x, avoid_precomp=False):
         # image_id = x.split('_')[-1].split('.')[0]

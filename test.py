@@ -8,7 +8,6 @@ from tqdm import tqdm
 import argparse
 import pickle
 import numpy as np
-import json as json
 
 random.seed(1234)
 torch.manual_seed(1234)
@@ -21,19 +20,15 @@ def predict_captions(model, dataloader, text_field):
     gen = {}
     gts = {}
     with tqdm(desc='Evaluation', unit='it', total=len(dataloader)) as pbar:
-        for it, example in enumerate(iter(dataloader)):
-            (images, caps_gt) = example['data']
-            image_ids = example['image_id']
+        for it, (images, caps_gt) in enumerate(iter(dataloader)):
             images = images.to(device)
             with torch.no_grad():
                 out, _ = model.beam_search(images, 20, text_field.vocab.stoi['<eos>'], 5, out_size=1)
             caps_gen = text_field.decode(out, join_words=False)
-            for i, (img_id_i, gts_i, gen_i) in enumerate(zip(image_ids, caps_gt, caps_gen)):
+            for i, (gts_i, gen_i) in enumerate(zip(caps_gt, caps_gen)):
                 gen_i = ' '.join([k for k, g in itertools.groupby(gen_i)])
-                # gen['%d_%d' % (it, i)] = [gen_i.strip(), ]
-                # gts['%d_%d' % (it, i)] = gts_i
-                gen[img_id_i] = [gen_i.strip(), ]
-                gts[img_id_i] = gts_i
+                gen['%d_%d' % (it, i)] = [gen_i.strip(), ]
+                gts['%d_%d' % (it, i)] = gts_i
             pbar.update()
 
     gts = evaluation.PTBTokenizer.tokenize(gts)

@@ -46,7 +46,7 @@ def predict_captions(model, dataloader, text_field):
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda')
+    device = torch.device('cuda' if torch.cuda_is_available() else 'cpu')
 
     parser = argparse.ArgumentParser(description='Meshed-Memory Transformer')
     parser.add_argument('--batch_size', type=int, default=10)

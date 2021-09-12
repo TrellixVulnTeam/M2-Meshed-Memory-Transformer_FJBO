@@ -43,15 +43,15 @@ class Dataset(object):
 
         if len(data) == 1:
             data = data[0]
-        return data
+        return {'data': data, 'image_id': getattr(example, 'image_id')}
 
     def __len__(self):
         return len(self.examples)
 
     def __getattr__(self, attr):
-        if attr in self.fields:
-            for x in self.examples:
-                yield getattr(x, attr)
+        # if attr in self.fields:
+        for x in self.examples:
+            yield getattr(x, attr)
 
 
 class ValueDataset(Dataset):
@@ -269,7 +269,7 @@ class COCO(PairedDataset):
                 filename = coco.iloc[index, 0]
                 caption = coco.iloc[index, 1]
 
-                example = Example.fromdict({'image': os.path.join(img_root, filename), 'text': caption})
+                example = Example.fromdict({'image': os.path.join(img_root, filename), 'text': caption, 'image_id': ids[index]})
 
                 if split == 'train':
                     train_samples.append(example)

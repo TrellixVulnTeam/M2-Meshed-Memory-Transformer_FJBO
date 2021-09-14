@@ -1,5 +1,5 @@
 # coding: utf8
-from collections import Counter, OrderedDict
+from collections import Counter, OrderedDict, defaultdict
 from torch.utils.data.dataloader import default_collate
 from itertools import chain
 import six
@@ -92,7 +92,10 @@ class ImageDetectionsField(RawField):
         self.sort_by_prob = sort_by_prob
 
         self.caps = pd.read_csv(captions_path)
-        self.caps.drop_duplicates(subset='image', keep='first', inplace=True, ignore_index=True)
+        self.maps = defaultdict(list)
+        for i in range(len(self.caps)):
+            self.maps[self.caps.iloc[i, 0]].append(self.caps.iloc[i, 1])
+        # self.caps.drop_duplicates(subset='image', keep='first', inplace=True, ignore_index=True)
 
         self.precomp = self.readTSV(detections_path, ['image_id', 'features'])
 

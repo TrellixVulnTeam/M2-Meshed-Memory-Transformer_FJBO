@@ -208,7 +208,8 @@ class COCO(PairedDataset):
             # ids['val'] = np.load(os.path.join(id_root, 'coco_dev_ids.npy'))
             # if cut_validation:
             #     ids['val'] = ids['val'][:5000]
-            ids['test'] = [image_field.caps.iloc[i, 0].split('.')[0] for i in range(len(image_field.caps))]
+            ids['test'] = [k for k in image_field.maps]
+            # ids['test'] = [image_field.caps.iloc[i, 0].split('.')[0] for i in range(len(image_field.caps))]
             # ids['trainrestval'] = (
             #     ids['train'],
             #     np.load(os.path.join(id_root, 'coco_restval_ids.npy')))
@@ -220,7 +221,7 @@ class COCO(PairedDataset):
             ids = None
 
         with nostdout():
-            self.train_examples, self.val_examples, self.test_examples = self.get_samples(roots, ids, image_field.caps)
+            self.train_examples, self.val_examples, self.test_examples = self.get_samples(roots, ids, image_field.maps)
         examples = self.train_examples + self.val_examples + self.test_examples
         super(COCO, self).__init__(examples, {'image': image_field, 'text': text_field})
 
@@ -269,10 +270,12 @@ class COCO(PairedDataset):
                 # caption = coco.anns[ann_id]['caption']
                 # img_id = coco.anns[ann_id]['image_id']
                 # filename = coco.loadImgs(img_id)[0]['file_name']
-                filename = coco.iloc[index, 0]
-                caption = coco.iloc[index, 1]
+                filename = ids[index]
+                caption = coco[filename]
+                # filename = coco.iloc[index, 0]
+                # caption = coco.iloc[index, 1]
 
-                example = Example.fromdict({'image': os.path.join(img_root, filename), 'text': caption})
+                example = Example.fromdict({'image': os.path.join(img_root, filename), 'text': [caption]})
 
                 if split == 'train':
                     train_samples.append(example)

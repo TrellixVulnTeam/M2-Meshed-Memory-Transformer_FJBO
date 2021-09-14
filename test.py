@@ -31,7 +31,7 @@ def predict_captions(model, dataloader, text_field):
             for i, (gts_i, gen_i, id_i) in enumerate(zip(caps_gt, caps_gen, ids)):
                 gen_i = ' '.join([k for k, g in itertools.groupby(gen_i)])
                 gen[id_i] = [gen_i.strip(), ]
-                gts[id_i] = gts_i
+                gts[id_i] = [s[0] for s in gts_i[0]]
             pbar.update()
 
     gts = evaluation.PTBTokenizer.tokenize(gts)
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     print('Meshed-Memory Transformer Evaluation')
 
     # Pipeline for image regions
-    image_field = ImageDetectionsField(detections_path=args.features_path, captions_path=args.annotation_folder, max_detections=36, load_in_tmp=False)
+    image_field = ImageDetectionsField(detections_path=args.features_path, captions_path=args.annotation_folder, max_detections=100, load_in_tmp=False)
 
     # Pipeline for text
     text_field = TextField(init_token='<bos>', eos_token='<eos>', lower=True, tokenize='spacy',

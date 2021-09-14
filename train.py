@@ -313,7 +313,7 @@ if __name__ == '__main__':
             'patience': patience,
             'best_cider': best_cider,
             'use_rl': use_rl,
-        }, 'saved_models/%s_last.pth' % args.exp_name)
+        }, 'saved_models/%s_meshed_memory_transformer_last.pth' % args.exp_name)
 
         if best:
             copyfile('saved_models/%s_last.pth' % args.exp_name, 'saved_models/%s_best.pth' % args.exp_name)

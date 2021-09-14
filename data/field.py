@@ -98,7 +98,7 @@ class ImageDetectionsField(RawField):
         self.caps.drop_duplicates(subset='image', keep='first', inplace=True, ignore_index=True)
         self.maps = {}
         for i in range(len(self.caps)):
-            self.maps[self.caps.iloc[i, 0]].append(self.caps.iloc[i, 1])
+            self.maps[os.path.join('/content/Dataset/Images', self.caps.iloc[i, 0])] = self.caps.iloc[i, 1]
 
         self.precomp = self.readTSV(detections_path, ['image_id', 'features'])
 

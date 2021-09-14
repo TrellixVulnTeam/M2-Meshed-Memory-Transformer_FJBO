@@ -204,11 +204,14 @@ class COCO(PairedDataset):
 
         if id_root is not None:
             ids = {}
+            id_list = [k for k in image_field.maps]
+            ids['train'] = [id_list[i] for i in range(0, 6000)]
             # ids['train'] = np.load(os.path.join(id_root, 'coco_train_ids.npy'))
+            ids['val'] = [id_list[i] for i in range(6000, 7000)]
             # ids['val'] = np.load(os.path.join(id_root, 'coco_dev_ids.npy'))
             # if cut_validation:
             #     ids['val'] = ids['val'][:5000]
-            ids['test'] = [k for k in image_field.maps]
+            ids['test'] = [id_list[i] for i in range(7000, len(id_list))]
             # ids['test'] = [image_field.caps.iloc[i, 0].split('.')[0] for i in range(len(image_field.caps))]
             # ids['trainrestval'] = (
             #     ids['train'],
@@ -238,8 +241,8 @@ class COCO(PairedDataset):
         val_samples = []
         test_samples = []
 
-        # for split in ['train', 'val', 'test']:
-        for split in ['test']:
+        for split in ['train', 'val', 'test']:
+        # for split in ['test']:
             if isinstance(roots[split]['cap'], tuple):
                 coco_dataset = (pyCOCO(roots[split]['cap'][0]), pyCOCO(roots[split]['cap'][1]))
                 root = roots[split]['img']

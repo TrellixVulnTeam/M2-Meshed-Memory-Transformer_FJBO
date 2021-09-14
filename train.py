@@ -165,7 +165,7 @@ if __name__ == '__main__':
                            remove_punctuation=True, nopoints=False)
 
     # Create the dataset
-    dataset = COCO(image_field, text_field, 'coco/images/', args.annotation_folder, args.annotation_folder)
+    dataset = COCO(image_field, text_field, 'Dataset', args.annotation_folder, args.annotation_folder)
     train_dataset, val_dataset, test_dataset = dataset.splits
 
     if not os.path.isfile('vocab_%s.pkl' % args.exp_name):
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         text_field.build_vocab(train_dataset, val_dataset, min_freq=5)
         pickle.dump(text_field.vocab, open('vocab_%s.pkl' % args.exp_name, 'wb'))
     else:
-        text_field.vocab = pickle.load(open('vocab_%s.pkl' % args.exp_name, 'rb'))
+        text_field.vocab = pickle.load(open('saved_model/vocab_%s.pkl' % args.exp_name, 'rb'))
 
     # Model and dataloaders
     encoder = MemoryAugmentedEncoder(3, 0, attention_module=ScaledDotProductAttentionMemory,
@@ -205,7 +205,7 @@ if __name__ == '__main__':
 
     if args.resume_last or args.resume_best:
         if args.resume_last:
-            fname = 'saved_models/%s_last.pth' % args.exp_name
+            fname = 'saved_models/%s_meshed_memory_transformer_last.pth' % args.exp_name
         else:
             fname = 'saved_models/%s_best.pth' % args.exp_name
 

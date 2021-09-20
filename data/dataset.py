@@ -224,7 +224,7 @@ class COCO(PairedDataset):
             ids = None
 
         with nostdout():
-            self.train_examples, self.val_examples, self.test_examples = self.get_samples(roots, ids, image_field.caps)
+            self.train_examples, self.val_examples, self.test_examples = self.get_samples(roots, ids, image_field.maps)
         examples = self.train_examples + self.val_examples + self.test_examples
         super(COCO, self).__init__(examples, {'image': image_field, 'text': text_field})
 
@@ -250,42 +250,42 @@ class COCO(PairedDataset):
                 coco_dataset = (caps,)
                 root = (roots[split]['img'],)
 
-            # if ids_dataset is None:
-            #     ids = list(coco_dataset.anns.keys())
-            # else:
-            #     ids = ids_dataset[split]
-            #
-            # if isinstance(ids, tuple):
-            #     bp = len(ids[0])
-            #     ids = list(ids[0]) + list(ids[1])
-            # else:
-            #     bp = len(ids)
+            if ids_dataset is None:
+                ids = list(coco_dataset.anns.keys())
+            else:
+                ids = ids_dataset[split]
 
-            for index in range(len(caps)):
-                # if index < bp:
-                #     coco = coco_dataset[0]
-                #     img_root = root[0]
-                # else:
-                coco = coco_dataset[0]
-                img_root = root[0]
+            if isinstance(ids, tuple):
+                bp = len(ids[0])
+                ids = list(ids[0]) + list(ids[1])
+            else:
+                bp = len(ids)
+
+            for index in range(len(ids)):
+                if index < bp:
+                    coco = coco_dataset[0]
+                    img_root = root[0]
+                else:
+                    coco = coco_dataset[1]
+                    img_root = root[1]
 
                 # ann_id = ids[index]
                 # caption = coco.anns[ann_id]['caption']
                 # img_id = coco.anns[ann_id]['image_id']
                 # filename = coco.loadImgs(img_id)[0]['file_name']
-                # filename = ids[index]
-                # caption = coco[filename]
-                filename = coco.iloc[index, 0]
-                caption = coco.iloc[index, 1]
+                filename = ids[index]
+                caption = coco[filename]
+                # filename = coco.iloc[index, 0]
+                # caption = coco.iloc[index, 1]
 
-                example = Example.fromdict({'image': os.path.join(img_root, filename), 'text': caption})
+                example = [Example.fromdict({'image': os.path.join(img_root, filename), 'text': c}) for c in caption]
 
                 if split == 'train':
-                    train_samples.append(example)
+                    train_samples.extend(example)
                 elif split == 'val':
-                    val_samples.append(example)
+                    val_samples.extend(example)
                 elif split == 'test':
-                    test_samples.append(example)
+                    test_samples.extend(example)
 
         return train_samples, val_samples, test_samples
 

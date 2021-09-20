@@ -168,10 +168,10 @@ if __name__ == '__main__':
     dataset = COCO(image_field, text_field, 'Dataset', args.annotation_folder, args.annotation_folder)
     train_dataset, val_dataset, test_dataset = dataset.splits
 
-    if not os.path.isfile('vocab_%s.pkl' % args.exp_name):
+    if not os.path.isfile('saved_models/vocab_%s.pkl' % args.exp_name):
         print("Building vocabulary")
         text_field.build_vocab(train_dataset, val_dataset, min_freq=5)
-        pickle.dump(text_field.vocab, open('vocab_%s.pkl' % args.exp_name, 'wb'))
+        pickle.dump(text_field.vocab, open('saved_models/vocab_%s.pkl' % args.exp_name, 'wb'))
     else:
         text_field.vocab = pickle.load(open('saved_model/vocab_%s.pkl' % args.exp_name, 'rb'))
 
@@ -207,7 +207,7 @@ if __name__ == '__main__':
         if args.resume_last:
             fname = 'saved_models/%s_meshed_memory_transformer_last.pth' % args.exp_name
         else:
-            fname = 'saved_models/%s_best.pth' % args.exp_name
+            fname = 'saved_models/%s_meshed_memory_transformer_best.pth' % args.exp_name
 
         if os.path.exists(fname):
             data = torch.load(fname)
@@ -290,7 +290,7 @@ if __name__ == '__main__':
                 exit_train = True
 
         if switch_to_rl and not best:
-            data = torch.load('saved_models/%s_best.pth' % args.exp_name)
+            data = torch.load('saved_models/%s_meshed_memory_transformer_best.pth' % args.exp_name)
             torch.set_rng_state(data['torch_rng_state'])
             torch.cuda.set_rng_state(data['cuda_rng_state'])
             np.random.set_state(data['numpy_rng_state'])
@@ -316,7 +316,7 @@ if __name__ == '__main__':
         }, 'saved_models/%s_meshed_memory_transformer_last.pth' % args.exp_name)
 
         if best:
-            copyfile('saved_models/%s_last.pth' % args.exp_name, 'saved_models/%s_best.pth' % args.exp_name)
+            copyfile('saved_models/%s_meshed_memory_transformer_last.pth' % args.exp_name, 'saved_models/%s_meshed_memory_transformer_best.pth' % args.exp_name)
 
         if exit_train:
             writer.close()

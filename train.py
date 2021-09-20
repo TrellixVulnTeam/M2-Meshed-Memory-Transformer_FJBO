@@ -173,7 +173,7 @@ if __name__ == '__main__':
         text_field.build_vocab(train_dataset, val_dataset, min_freq=5)
         pickle.dump(text_field.vocab, open('saved_models/vocab_%s.pkl' % args.exp_name, 'wb'))
     else:
-        text_field.vocab = pickle.load(open('saved_model/vocab_%s.pkl' % args.exp_name, 'rb'))
+        text_field.vocab = pickle.load(open('saved_models/vocab_%s.pkl' % args.exp_name, 'rb'))
 
     # Model and dataloaders
     encoder = MemoryAugmentedEncoder(3, 0, attention_module=ScaledDotProductAttentionMemory,

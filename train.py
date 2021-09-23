@@ -72,7 +72,7 @@ def evaluate_metrics(model, dataloader, text_field):
 def train_xe(model, dataloader, optim, text_field):
     # Training with cross-entropy
     model.train()
-    scheduler.step()
+    ## scheduler.step()
     running_loss = .0
     with tqdm(desc='Epoch %d - train' % e, unit='it', total=len(dataloader)) as pbar:
         for it, (detections, captions) in enumerate(dataloader):
@@ -108,6 +108,7 @@ def train_scst(model, dataloader, optim, cider, text_field):
 
     with tqdm(desc='Epoch %d - train' % e, unit='it', total=len(dataloader)) as pbar:
         for it, (detections, caps_gt) in enumerate(dataloader):
+            detections = detections[0]
             detections = detections.to(device)
             outs, log_probs = model.beam_search(detections, seq_len, text_field.vocab.stoi['<eos>'],
                                                 beam_size, out_size=beam_size)

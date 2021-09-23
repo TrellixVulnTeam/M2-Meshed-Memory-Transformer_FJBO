@@ -119,7 +119,7 @@ class ImageDetectionsField(RawField):
         super(ImageDetectionsField, self).__init__(preprocessing, postprocessing)
 
     def readTSV(self, path, fields):
-        print('reading detections...\n')
+        print('reading detections...', end='')
         csv.field_size_limit(sys.maxsize)
         reader = csv.DictReader(open(path, "r+"), delimiter='\t', fieldnames=fields)
         mapping = {}
@@ -129,6 +129,7 @@ class ImageDetectionsField(RawField):
             temp = np.frombuffer(buf, dtype=np.float32)
             temp = temp.reshape(36, -1)
             mapping[item[fields[0]]] = temp
+        print('Done')
         return mapping
 
     def preprocess(self, x, avoid_precomp=False):

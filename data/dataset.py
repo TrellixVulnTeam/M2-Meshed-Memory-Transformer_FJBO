@@ -48,6 +48,19 @@ class Dataset(object):
             data = data[0]
         return data
 
+    def at(self, i):
+        example = self.examples[i]
+        data = []
+        for field_name, field in self.fields.items():
+            data.append(field.preprocess(getattr(example, field_name)))
+            if field_name == 'image':
+                image_id = getattr(example, field_name)
+                data.append(image_id)
+
+        if len(data) == 1:
+            data = data[0]
+        return data
+
     def __len__(self):
         return len(self.examples)
 

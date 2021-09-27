@@ -56,14 +56,13 @@ def evaluate_metrics(model, dataloader, text_field):
             features = images[0]
             ids = images[1]
             images = features.to(device)
-            caps_gt = np.transpose(caps_gt[0])
             with torch.no_grad():
                 out, _ = model.beam_search(images, 20, text_field.vocab.stoi['<eos>'], 5, out_size=1)
             caps_gen = text_field.decode(out, join_words=False)
             for i, (gts_i, gen_i, id_i) in enumerate(zip(caps_gt, caps_gen, ids)):
                 gen_i = ' '.join([k for k, g in itertools.groupby(gen_i)])
                 gen[id_i] = [gen_i.strip(), ]
-                gts[id_i] = [s[0] for s in gts_i]
+                gts[id_i] = [s for s in gts_i]
             pbar.update()
 
     show_results(gts, gen, e)
@@ -76,13 +75,14 @@ def evaluate_metrics(model, dataloader, text_field):
 def show_results(gts, gen, epoch):
     os.mkdir('reslts_%d' % epoch)
     for id in test_keys:
-        img = mimg.imread(id)
-        gt = gts[id]
-        gn = gen[id]
-        plt.title('GT: ' + ''.join(gt))
-        plt.xlabel('GN: ' + ''.join(gn))
-        plt.imshow(img)
-        plt.savefig(os.path.join('reslts_%d' % epoch, id.split('.')[0].split(os.path.sep)[-1]))
+        if id in test_keys:
+            img = mimg.imread(id)
+            gt = gts[id]
+            gn = gen[id]
+            plt.title('GT: ' + ''.join(''.join(s+"\n" for s in gt)))
+            plt.xlabel('GN: ' + ''.join(gn))
+            plt.imshow(img)
+            plt.savefig(os.path.join('reslts_%d' % epoch, id.split('.')[0].split(os.path.sep)[-1]))
 
 
 def train_xe(model, dataloader, optim, text_field):
@@ -189,8 +189,8 @@ if __name__ == '__main__':
     train_dataset, val_dataset, test_dataset = dataset.splits
 
     for i in range(10):
-        x, _ = test_dataset.__getitem__(i)
-        test_keys.append(x[1])
+        x = (test_dataset.__getitem__(i))[1]
+        test_keys.append(x)
 
     if not os.path.isfile('saved_models/vocab_%s.pkl' % args.exp_name):
         print("Building vocabulary")
@@ -235,19 +235,19 @@ if __name__ == '__main__':
 
         if os.path.exists(fname):
             data = torch.load(fname)
-            torch.set_rng_state(data['torch_rng_state'])
-            torch.cuda.set_rng_state(data['cuda_rng_state'])
-            np.random.set_state(data['numpy_rng_state'])
-            random.setstate(data['random_rng_state'])
+            # torch.set_rng_state(data['torch_rng_state'])
+            # torch.cuda.set_rng_state(data['cuda_rng_state'])
+            # np.random.set_state(data['numpy_rng_state'])
+            # random.setstate(data['random_rng_state'])
             model.load_state_dict(data['state_dict'], strict=False)
-            optim.load_state_dict(data['optimizer'])
-            scheduler.load_state_dict(data['scheduler'])
-            start_epoch = data['epoch'] + 1
-            best_cider = data['best_cider']
-            patience = data['patience']
-            use_rl = data['use_rl']
-            print('Resuming from epoch %d, validation loss %f, and best cider %f' % (
-                data['epoch'], data['val_loss'], data['best_cider']))
+            # optim.load_state_dict(data['optimizer'])
+            # scheduler.load_state_dict(data['scheduler'])
+            # start_epoch = data['epoch'] + 1
+            # best_cider = data['best_cider']
+            # patience = data['patience']
+            # use_rl = data['use_rl']
+            # print('Resuming from epoch %d, validation loss %f, and best cider %f' % (
+            #     data['epoch'], data['val_loss'], data['best_cider']))
 
     print("Training starts")
     for e in range(start_epoch, start_epoch + 10):

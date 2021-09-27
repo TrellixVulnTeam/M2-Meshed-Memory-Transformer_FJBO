@@ -15,11 +15,14 @@ import numpy as np
 import itertools
 import multiprocessing
 from shutil import copyfile
+import matplotlib.image as mimg
+import matplotlib.pyplot as plt
 
 random.seed(1234)
 torch.manual_seed(1234)
 np.random.seed(1234)
 
+test_keys = []
 
 def evaluate_loss(model, dataloader, loss_fn, text_field):
     # Validation loss
@@ -63,10 +66,23 @@ def evaluate_metrics(model, dataloader, text_field):
                 gts[id_i] = [s[0] for s in gts_i]
             pbar.update()
 
+    show_results(gts, gen, e)
     gts = evaluation.PTBTokenizer.tokenize(gts)
     gen = evaluation.PTBTokenizer.tokenize(gen)
     scores, _ = evaluation.compute_scores(gts, gen)
     return scores
+
+
+def show_results(gts, gen, epoch):
+    os.mkdir('reslts_%d' % epoch)
+    for id in test_keys:
+        img = mimg.imread(id)
+        gt = gts[id]
+        gn = gen[id]
+        plt.title('GT: ' + ''.join(gt))
+        plt.xlabel('GN: ' + ''.join(gn))
+        plt.imshow(img)
+        plt.savefig(os.path.join('reslts_%d' % epoch, id.split('.')[0].split(os.path.sep)[-1]))
 
 
 def train_xe(model, dataloader, optim, text_field):
@@ -172,6 +188,10 @@ if __name__ == '__main__':
     dataset = COCO(image_field, text_field, 'Dataset', args.annotation_folder, args.annotation_folder)
     train_dataset, val_dataset, test_dataset = dataset.splits
 
+    for i in range(10):
+        x, _ = test_dataset.__getitem__(i)
+        test_keys.append(x[1])
+
     if not os.path.isfile('saved_models/vocab_%s.pkl' % args.exp_name):
         print("Building vocabulary")
         text_field.build_vocab(train_dataset, val_dataset, min_freq=5)
@@ -230,7 +250,8 @@ if __name__ == '__main__':
                 data['epoch'], data['val_loss'], data['best_cider']))
 
     print("Training starts")
-    for e in range(start_epoch, start_epoch + 100):
+    for e in range(start_epoch, start_epoch + 10):
+        print()
         dataloader_train = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers,
                                       drop_last=True)
         dataloader_val = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)

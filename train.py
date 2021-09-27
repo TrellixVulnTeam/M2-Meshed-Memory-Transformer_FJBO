@@ -46,43 +46,32 @@ def evaluate_loss(model, dataloader, loss_fn, text_field):
     return val_loss
 
 
-def evaluate_metrics(model, dataloader, text_field):
+def evaluate_metrics(model, dataloader, text_field, test=False):
     import itertools
     model.eval()
     gen = {}
     gts = {}
     with tqdm(desc='Epoch %d - evaluation' % e, unit='it', total=len(dataloader)) as pbar:
         for it, (images, caps_gt) in enumerate(iter(dataloader)):
-            features = images[0]
-            ids = images[1]
-            images = features.to(device)
+            images = images.to(device)
             with torch.no_grad():
                 out, _ = model.beam_search(images, 20, text_field.vocab.stoi['<eos>'], 5, out_size=1)
             caps_gen = text_field.decode(out, join_words=False)
-            for i, (gts_i, gen_i, id_i) in enumerate(zip(caps_gt, caps_gen, ids)):
+            for i, (gts_i, gen_i) in enumerate(zip(caps_gt, caps_gen)):
                 gen_i = ' '.join([k for k, g in itertools.groupby(gen_i)])
-                gen[id_i] = [gen_i.strip(), ]
-                gts[id_i] = [s for s in gts_i]
+                gen['%d_%d' % (it, i)] = [gen_i.strip(), ]
+                gts['%d_%d' % (it, i)] = [s for s in gts_i]
             pbar.update()
 
-    show_results(gts, gen, e)
+    if test:
+      os.mkdir('results_%d' % e)
+      json.dump(gts, open(os.path.join('results_%d' %e, 'gts.json'), 'w'))
+      json.dump(gen, open(os.path.join('results_%d' %e, 'gen.json'), 'w'))
     gts = evaluation.PTBTokenizer.tokenize(gts)
     gen = evaluation.PTBTokenizer.tokenize(gen)
     scores, _ = evaluation.compute_scores(gts, gen)
     return scores
 
-
-def show_results(gts, gen, epoch):
-    os.mkdir('reslts_%d' % epoch)
-    for id in test_keys:
-        if id in test_keys:
-            img = mimg.imread(id)
-            gt = gts[id]
-            gn = gen[id]
-            plt.title('GT: ' + ''.join(''.join(s+"\n" for s in gt)))
-            plt.xlabel('GN: ' + ''.join(gn))
-            plt.imshow(img)
-            plt.savefig(os.path.join('reslts_%d' % epoch, id.split('.')[0].split(os.path.sep)[-1]))
 
 
 def train_xe(model, dataloader, optim, text_field):
@@ -124,7 +113,6 @@ def train_scst(model, dataloader, optim, cider, text_field):
 
     with tqdm(desc='Epoch %d - train' % e, unit='it', total=len(dataloader)) as pbar:
         for it, (detections, caps_gt) in enumerate(dataloader):
-            detections = detections[0]
             detections = detections.to(device)
             outs, log_probs = model.beam_search(detections, seq_len, text_field.vocab.stoi['<eos>'],
                                                 beam_size, out_size=beam_size)
@@ -284,7 +272,7 @@ if __name__ == '__main__':
         writer.add_scalar('data/val_rouge', scores['ROUGE'], e)
 
         # Test scores
-        scores = evaluate_metrics(model, dict_dataloader_test, text_field)
+        scores = evaluate_metrics(model, dict_dataloader_test, text_field, test=True)
         print("Test scores", scores)
         writer.add_scalar('data/test_cider', scores['CIDEr'], e)
         writer.add_scalar('data/test_bleu1', scores['BLEU'][0], e)

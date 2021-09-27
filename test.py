@@ -22,17 +22,14 @@ def predict_captions(model, dataloader, text_field):
     gts = {}
     with tqdm(desc='Evaluation', unit='it', total=len(dataloader)) as pbar:
         for it, (images, caps_gt) in enumerate(iter(dataloader)):
-            features = images[0]
-            ids = images[1]
             images = features.to(device)
-            caps_gt = np.transpose(caps_gt[0])
             with torch.no_grad():
                 out, _ = model.beam_search(images, 20, text_field.vocab.stoi['<eos>'], 5, out_size=1)
             caps_gen = text_field.decode(out, join_words=False)
-            for i, (gts_i, gen_i, id_i) in enumerate(zip(caps_gt, caps_gen, ids)):
+            for i, (gts_i, gen_i) in enumerate(zip(caps_gt, caps_gen)):
                 gen_i = ' '.join([k for k, g in itertools.groupby(gen_i)])
-                gen[id_i] = [gen_i.strip(), ]
-                gts[id_i] = [s[0] for s in gts_i]
+                gen['%d_%d' % (it, i)] = [gen_i.strip(), ]
+                gts['%d_%d' % (it, i)] = [s for s in gts_i]
             pbar.update()
 
     gts = evaluation.PTBTokenizer.tokenize(gts)

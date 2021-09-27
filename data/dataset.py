@@ -40,26 +40,14 @@ class Dataset(object):
         data = []
         for field_name, field in self.fields.items():
             data.append(field.preprocess(getattr(example, field_name)))
-            if field_name == 'image':
-                image_id = getattr(example, field_name)
-                data.append(image_id)
+            #if field_name == 'image':
+            #   image_id = getattr(example, field_name)
+            #  data.append(image_id)
 
         if len(data) == 1:
             data = data[0]
         return data
 
-    def at(self, i):
-        example = self.examples[i]
-        data = []
-        for field_name, field in self.fields.items():
-            data.append(field.preprocess(getattr(example, field_name)))
-            # if field_name == 'image':
-            #     image_id = getattr(example, field_name)
-            #     data.append(image_id)
-
-        if len(data) == 1:
-            data = data[0]
-        return data
 
     def __len__(self):
         return len(self.examples)
@@ -128,7 +116,6 @@ class DictionaryDataset(Dataset):
             value_examples.append(value_example)
             dictionary[key_dict[key_example]].append(i)
 
-        self.examps = key_examples
         self.key_dataset = Dataset(key_examples, key_fields)
         self.value_dataset = ValueDataset(value_examples, value_fields, dictionary)
         super(DictionaryDataset, self).__init__(examples, fields)
@@ -142,7 +129,7 @@ class DictionaryDataset(Dataset):
         return collate
 
     def __getitem__(self, i):
-        return (self.key_dataset[i], self.examps[i]), self.value_dataset[i]
+        return self.key_dataset[i], self.value_dataset[i]
 
     def __len__(self):
         return len(self.key_dataset)
